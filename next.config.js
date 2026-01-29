@@ -1,4 +1,7 @@
 /** @type {import('next').NextConfig} */
+const fs = require('fs');
+const path = require('path');
+
 const nextConfig = {
     images: {
         remotePatterns: [
@@ -31,6 +34,12 @@ const nextConfig = {
                 ],
             },
         ];
+    },
+    // Don't include public/data in static files (Cloudflare Pages has 20,000 file limit)
+    onDemandEntries: {
+        // Make sure entries are not getting disposed mid-request
+        maxInactiveAge: 60 * 1000,
+        pagesBufferLength: 5,
     },
 };
 

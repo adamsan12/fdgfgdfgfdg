@@ -1,0 +1,13 @@
+name = "agc-web"
+type = "javascript"
+
+[env.production]
+name = "agc-web-prod"
+
+[build]
+command = "mv public/data public/data.bak 2>/dev/null || true && npm run build && npx @cloudflare/next-on-pages && mv public/data.bak public/data 2>/dev/null || true"
+cwd = "./"
+
+[build.upload]
+format = "modules"
+main = ".vercel/output/functions/_middleware.js"

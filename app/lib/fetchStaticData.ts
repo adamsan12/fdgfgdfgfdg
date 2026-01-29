@@ -1,13 +1,17 @@
 // Get the base URL for data fetching
-const getBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    return window.location.origin
-  }
-  // For server-side, try to get from environment or use relative path
-  return process.env.NEXT_PUBLIC_APP_URL || ''
+// Use environment variable for production, default to local for development
+const getDataBaseUrl = () => {
+  // In production on Cloudflare Pages, you should set NEXT_PUBLIC_DATA_URL
+  // Example: NEXT_PUBLIC_DATA_URL=https://your-cdn.com/data
+  // Or upload data to Cloudflare R2 and set: NEXT_PUBLIC_DATA_URL=https://your-bucket.r2.cloudflare.com/data
+  const envUrl = process.env.NEXT_PUBLIC_DATA_URL
+  if (envUrl) return envUrl
+  
+  // Default to local /data path for development
+  return '/data'
 }
 
-const DATA_BASE_URL = '/data'
+const DATA_BASE_URL = getDataBaseUrl()
 
 // In-memory cache untuk meta dan halaman list
 let metaCache: any = null
