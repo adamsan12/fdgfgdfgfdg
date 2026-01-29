@@ -1,10 +1,13 @@
-import { promises as fs } from 'fs'
-import path from 'path'
+// Get the base URL for data fetching
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin
+  }
+  // For server-side, try to get from environment or use relative path
+  return process.env.NEXT_PUBLIC_APP_URL || ''
+}
 
-const DATA_DIR = path.join(process.cwd(), 'public/data')
-const LIST_DIR = path.join(DATA_DIR, 'list')
-const DETAIL_DIR = path.join(DATA_DIR, 'detail')
-const INDEX_DIR = path.join(DATA_DIR, 'index')
+const DATA_BASE_URL = '/data'
 
 // In-memory cache untuk meta dan halaman list
 let metaCache: any = null
@@ -13,13 +16,22 @@ let listPageCache: Map<number, any> = new Map()
 /**
  * Mengambil detail file berdasarkan file_code
  * Load per-request, bukan preload semua
+ * Compatible with Edge Runtime (uses HTTP instead of fs)
  */
 export async function getFileDetail(fileCode: string) {
   try {
     const prefix = fileCode.substring(0, 2)
-    const filePath = path.join(DETAIL_DIR, prefix, `${fileCode}.json`)
-    const content = await fs.readFile(filePath, 'utf-8')
-    return JSON.parse(content)
+    const url = `${DATA_BASE_URL}/detail/${prefix}/${fileCode}.json`
+    const response = await fetch(url, {
+      next: { revalidate: 86400 } // Cache for 24 hours
+    })
+    
+    if (!response.ok) {
+      console.error(`Failed to fetch detail for ${fileCode}: ${response.status}`)
+      return null
+    }
+    
+    return await response.json()
   } catch (error) {
     console.error(`Failed to fetch detail for ${fileCode}:`, error)
     return null
@@ -29,6 +41,7 @@ export async function getFileDetail(fileCode: string) {
 /**
  * Mengambil list data dengan pagination
  * Menggunakan data_page_X.json yang sudah ter-paginate
+ * Compatible with Edge Runtime (uses HTTP instead of fs)
  */
 export async function getListData(page: number) {
   try {
@@ -36,9 +49,17 @@ export async function getListData(page: number) {
       return listPageCache.get(page)
     }
 
-    const filePath = path.join(LIST_DIR, `${page}.json`)
-    const content = await fs.readFile(filePath, 'utf-8')
-    const data = JSON.parse(content)
+    const url = `${DATA_BASE_URL}/list/${page}.json`
+    const response = await fetch(url, {
+      next: { revalidate: 86400 } // Cache for 24 hours
+    })
+    
+    if (!response.ok) {
+      console.error(`Failed to fetch list page ${page}: ${response.status}`)
+      return { data: [], page, per_page: 200, total: 0, total_pages: 0 }
+    }
+    
+    const data = await response.json()
     
     // Cache hasil
     listPageCache.set(page, data)
@@ -52,19 +73,20 @@ export async function getListData(page: number) {
 /**
  * Mengambil search index untuk prefix tertentu
  * Gunakan untuk search functionality
+ * Compatible with Edge Runtime (uses HTTP instead of fs)
  */
 export async function getSearchIndex(prefix: string) {
   try {
-    // Coba file prefix dulu (misal: aa.json)
-    try {
-      const filePath = path.join(INDEX_DIR, `${prefix}.json`)
-      const content = await fs.readFile(filePath, 'utf-8')
-      return JSON.parse(content)
-    } catch {
-      // Jika tidak ada file, mungkin folder (misal: ab/)
-      // Untuk sekarang return empty array
+    const url = `${DATA_BASE_URL}/index/${prefix}.json`
+    const response = await fetch(url, {
+      next: { revalidate: 86400 } // Cache for 24 hours
+    })
+    
+    if (!response.ok) {
       return []
     }
+    
+    return await response.json()
   } catch (error) {
     console.error(`Failed to fetch search index for ${prefix}:`, error)
     return []
@@ -73,6 +95,7 @@ export async function getSearchIndex(prefix: string) {
 
 /**
  * Mengambil metadata (total files, per_page, dll)
+ * Compatible with Edge Runtime (uses HTTP instead of fs)
  */
 export async function getMeta() {
   try {
@@ -80,9 +103,17 @@ export async function getMeta() {
       return metaCache
     }
 
-    const filePath = path.join(DATA_DIR, 'meta.json')
-    const content = await fs.readFile(filePath, 'utf-8')
-    metaCache = JSON.parse(content)
+    const url = `${DATA_BASE_URL}/meta.json`
+    const response = await fetch(url, {
+      next: { revalidate: 86400 } // Cache for 24 hours
+    })
+    
+    if (!response.ok) {
+      console.error(`Failed to fetch meta: ${response.status}`)
+      return { total: 0, per_page: 200 }
+    }
+    
+    metaCache = await response.json()
     return metaCache
   } catch (error) {
     console.error('Failed to fetch meta:', error)
