@@ -3,7 +3,6 @@ import { getListData, getMeta } from "@/app/lib/fetchStaticData";
 import { setCorsHeaders } from "@/app/lib/cors";
 import { processTitle } from "@/app/lib/titleProcessor";
 
-export const runtime = 'edge';
 export const revalidate = 86400; // Revalidate every 24 hours (1 day)
 
 export async function GET(request: Request) {
