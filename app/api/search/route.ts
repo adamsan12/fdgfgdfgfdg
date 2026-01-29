@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     })
 
     const corsResponse = setCorsHeaders(response)
-    corsResponse.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600')
+    corsResponse.headers.set('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400')
     return corsResponse
   } catch (error) {
     const errorResponse = NextResponse.json({ error: "Failed to fetch data" }, { status: 500 })

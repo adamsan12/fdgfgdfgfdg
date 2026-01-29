@@ -1,0 +1,15 @@
+{
+  "name": "agc-web",
+  "type": "javascript",
+  "main": ".wrangler/tmp/index.js",
+  "env": {
+    "production": {
+      "name": "agc-web-prod"
+    }
+  },
+  "vars": {},
+  "build": {
+    "command": "npm run build",
+    "cwd": "./"
+  }
+}

@@ -50,7 +50,9 @@ export async function GET(request: Request) {
       server_time: new Date().toISOString().replace("T", " ").substr(0, 19),
     })
 
-    return setCorsHeaders(response)
+    const corsResponse = setCorsHeaders(response)
+    corsResponse.headers.set('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400')
+    return corsResponse
   } catch (error) {
     const errorResponse = NextResponse.json({ error: "Failed to fetch data" }, { status: 500 })
     return setCorsHeaders(errorResponse)
